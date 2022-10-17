@@ -24,7 +24,7 @@ async function CoinFlip() {
     //创建合约对象
     const contract = new ethers.Contract(contract_address, abi, wallet);
 
-    //查看合约的owner
+    //查看合约的consecutiveWins
     const consecutiveWins = await contract.consecutiveWins();
     var wins = consecutiveWins.toNumber();
     console.log("consecutiveWins==" + wins);
