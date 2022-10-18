@@ -7,37 +7,51 @@ node Telephone.js
 ```
 
 # 通关条件
-* 让自己变成合约的owner
 
+* 让自己变成合约的owner
 # 解题思路
 
-观察合约发现，这个合约真正执行的只有一个方法。
+这个合约很简单，一个构造函数，一个`changeOwner()`函数。因为合约不是我们创建的，是在`Ethernaut`官网
+上点击生成实例，由`Ethernaut`创建的。构造函数是合约创建的时候执行的，有切仅执行一次。所以目标移动
+到`changeOwner()`函数。查看`changeOwner()`函数，入参是想赋予的owner地址。这个没有什么可以说的。
+所以关键点只能在` if (tx.origin != msg.sender)`这句上。
+
+- tx.origin是什么？\
+官方文档说明: `tx.origin` sender of the transaction (full call chain).意思就是交易的
+发起者(从透到尾的一次链上调用)。
+- msg.sender是什么？\
+官方文档说明: `msg.sender` sender of the message (current call).意思就是消息的发送者(当
+前调用)
+- 如何理解？\
+A拿着电话给B打电话。A:`tx.origin`。电话:`msg.sender`
+
+因此满足` if (tx.origin != msg.sender)`条件的方式就是新建一个合约去调用Telephone合约。这样
+`tx.origin`是我们的，而`msg.sender`是新建的合约。这里我们新建`People`合约去调用`Telephone`
+合约。
 ```shell
-    function flip(bool _guess) public returns (bool) {
-        uint256 blockValue = uint256(blockhash(block.number.sub(1)));
+contract Telephone {
 
-        if (lastHash == blockValue) {
-            revert();
-        }
+    address public owner;
 
-        lastHash = blockValue;
-        uint256 coinFlip = blockValue.div(FACTOR);
-        bool side = coinFlip == 1 ? true : false;
+    constructor() public {
+        owner = msg.sender;
+    }
 
-        if (side == _guess) {
-            consecutiveWins++;
-            return true;
-        } else {
-            consecutiveWins = 0;
-            return false;
+    function changeOwner(address _owner) public {
+        if (tx.origin != msg.sender) {
+            owner = _owner;
         }
     }
-```
-输入bool类型是自己的猜想，返回bool类型是验证自己的猜想是否正确。通过`consecutiveWins`查看自己
-猜对了几次。\
-观察发现这个合约足够简单，并没有逻辑上的错误。查看`solidity`版本并没有类型上错误。那么有切仅有
-一种方法了，那就是一直调用`flip()`，直到`consecutiveWins`变成10。虽然连续猜对10的概率很小，但是
-并不代表没有。\
-我输入`true`认为10次都是`true`。经过一下午的运行，最大纪录为连续4次为`true`\
+}
 
-![](SCR-20221011-p0x.png)
+```
+## 实践
+### 一.使用Remix编译People合约得到bytecode和abicode
+![](SCR-20221017-rlr.png)
+注意：bytecode只需要拷贝object字段后面的不需要拷贝整个文本。如果无法使用Remix，我已经把bytecode和abicode
+放到了目录下。
+### 二.执行Telephone.js,得到如下结果
+![](SCR-20221017-rjm.png)
+这个时候合约的owner已经变为你的钱包地址
+### 三.去[Ethernaut官网](https://ethernaut.openzeppelin.com/level/0x466BDd41a04473A01031C9D80f61A9487C7ef488)提交实例，得到如下结果
+![](SCR-20221017-rrr.png)
